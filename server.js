@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
@@ -14,22 +16,45 @@ STRICT RULES — NEVER BREAK THESE:
 2. NEVER recommend specific medicines. Never name drugs. If you would mention a drug, say "[medicine - consult doctor]" instead.
 3. Every response MUST end with: "⚠️ This is NOT a diagnosis. Always consult a doctor."
 4. Keep responses simple — this is for rural health workers, not doctors.
-5. Only say "CALL 108 IMMEDIATELY" if symptoms clearly suggest a serious emergency.
+5. Use plain language. No complex medical jargon.
+6. Be concise — max 200 words.
+7. Structure your response with clear sections if needed.
 
-For chest pain:
-- Say CALL 108 ONLY if chest pain is accompanied by:
-  - sweating
-  - difficulty breathing
-  - pain spreading to arm or jaw
-  - dizziness or fainting
+SEVERITY LEVELS — follow these strictly:
 
-- For mild chest pain alone, DO NOT say CALL 108. Instead say:
-  "This needs medical attention soon. Monitor closely and refer to doctor."
+🟢 MILD (home care advice):
+- Fever under 3 days + cough → rest, fluids, monitor
+- Mild headache, mild stomach ache, common cold
+- Response: "Monitor at home. See a doctor if it gets worse."
 
-For other emergencies (unconscious, not breathing, heavy bleeding, seizure, stroke, severe burn), say CALL 108 immediately.
-6. Use plain language. No complex medical jargon.
-7. Be concise — max 200 words.
-8. Structure your response with clear sections if needed.`;
+🟡 MODERATE (refer to doctor soon):
+- Fever for 3+ days WITH cough → "See a doctor within 24 hours."
+- Mild chest pain alone (no other symptoms) → "Refer to doctor soon. Monitor closely."
+- Vomiting for 1–2 days, mild dehydration
+- Response: "This needs medical attention soon. Visit a clinic or doctor."
+
+🔴 EMERGENCY — say CALL 108 ONLY for:
+- Chest pain + sweating + difficulty breathing + arm/jaw pain
+- Unconscious or unresponsive patient
+- Not breathing or stopped breathing
+- Heavy uncontrolled bleeding
+- Seizure currently happening
+- Signs of stroke (face drooping, arm weak, speech slurred)
+- Severe burns covering large area
+- High fever + stiff neck + sensitivity to light (meningitis signs)
+
+⛔ NEVER trigger emergency response for:
+- Fever alone (even 3+ days)
+- Cough alone
+- Mild breathing difficulty without chest pain or unconsciousness
+- Mild chest pain without other emergency signs
+- Any single mild symptom
+
+EMERGENCY response format (ONLY when truly needed):
+"🚨 CALL 108 IMMEDIATELY
+While waiting: [only the relevant first aid for their SPECIFIC situation — do not list all emergencies]"
+
+DO NOT list every possible emergency scenario. Only address what the patient actually has.`;
 
 function callGroqAPI(messages, callback) {
   const body = JSON.stringify({
@@ -84,7 +109,6 @@ function sanitizeResponse(text) {
   for (const pattern of MEDICINE_PATTERNS) {
     sanitized = sanitized.replace(pattern, '[medicine - consult doctor]');
   }
-  // Ensure disclaimer is always present
   if (!sanitized.includes('NOT a diagnosis')) {
     sanitized += '\n\n⚠️ This is NOT a diagnosis. Always consult a doctor.';
   }
@@ -92,7 +116,6 @@ function sanitizeResponse(text) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -103,7 +126,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Serve index.html
   if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
     const filePath = path.join(__dirname, 'index.html');
     fs.readFile(filePath, (err, data) => {
@@ -118,7 +140,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // AI Query endpoint
   if (req.method === 'POST' && req.url === '/api/query') {
     let body = '';
     req.on('data', chunk => body += chunk);
@@ -155,7 +176,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Health check
   if (req.method === 'GET' && req.url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', model: MODEL }));
@@ -171,6 +191,6 @@ server.listen(PORT, () => {
   console.log(`   Model: ${MODEL}`);
   if (GROQ_API_KEY === 'YOUR_GROQ_API_KEY_HERE') {
     console.log(`\n⚠️  WARNING: Set your GROQ_API_KEY environment variable!`);
-    console.log(`   Run: GROQ_API_KEY=your_key_here node server.js\n`);
+    console.log(`   Create a .env file with: GROQ_API_KEY=your_key_here\n`);
   }
 });
