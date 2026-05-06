@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,6 +106,11 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px;cursor:point
 .offline-match .match-q{color:#93c5fd;font-size:13px;margin-bottom:4px}
 .offline-match .match-score{float:right;font-size:12px;color:#60a5fa}
 
+/* ── Severity badge ── */
+.severity-mild{background:#064e3b;color:#34d399;border:1px solid #34d399;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:700}
+.severity-moderate{background:#78350f;color:#fcd34d;border:1px solid var(--warning);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:700}
+.severity-urgent{background:#7f1d1d;color:#fca5a5;border:1px solid var(--danger);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:700}
+
 /* ── Emergency screen ── */
 #emergency-screen{display:none;position:fixed;inset:0;background:#1a0000;z-index:9999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
 #emergency-screen.show{display:flex}
@@ -119,7 +128,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px;cursor:point
 .export-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 
 /* ── WhatsApp btn ── */
-.wa-btn{background:#25d366;color:#fff;font-size:18px;min-height:56px;border-radius:var(--radius);border:none;cursor:pointer;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
+.wa-btn{background:#25d366;color:#fff;font-size:18px;min-height:56px;border-radius:var(--radius);border:none;cursor:pointer;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;text-decoration:none}
 .wa-btn:active{filter:brightness(.85)}
 
 /* ── Utility ── */
@@ -138,14 +147,9 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px;cursor:point
   <div class="emergency-pulse">🚨</div>
   <div class="emergency-call">CALL 108 NOW</div>
   <div class="emergency-sub">This is a medical emergency — do not wait</div>
-  <div class="emergency-rules">
+  <div class="emergency-rules" id="emergency-rules">
     <strong>While waiting for help:</strong><br>
-    🫀 Chest pain → Keep patient still, loosen clothes<br>
-    😮‍💨 Not breathing → Start CPR if trained<br>
-    🩸 Heavy bleeding → Apply firm pressure<br>
-    😵 Unconscious → Recovery position, clear airway<br>
-    🔥 Severe burn → Cool with clean water 10 min<br>
-    💥 Seizure → Clear area, do NOT restrain
+    🏥 Keep patient calm and still
   </div>
   <button class="btn btn-ghost mt" style="max-width:300px;margin-top:20px" onclick="closeEmergency()">✕ Close Emergency Alert</button>
 </div>
@@ -251,7 +255,7 @@ const MAX_CACHE = 20;
 let currentLang = localStorage.getItem(LANG_KEY) || 'en';
 let isOnline = navigator.onLine;
 let currentTab = 'symptoms';
-let symptomAnswers = [];
+let symptomAnswers = {};
 let symptomStep = 0;
 
 // ═══════════════════════════════════════════════════════════════
@@ -276,8 +280,7 @@ const I18N = {
     ask_patient_name:'Patient Name (optional)', ask_age:'Age', ask_question:'Your Question',
     ask_submit:'Get Advice', analyze_vitals:'Analyze Readings', log_clear:'Clear Log',
     yes:'YES', no:'NO', offline_cache:'Showing cached similar responses (offline)',
-    share_wa:'Share on WhatsApp', thinking:'Thinking...', no_log:'No entries yet.',
-    emergency_keywords:['chest pain','difficulty breathing','unconscious','heavy bleeding','seizure','stroke','not breathing','severe burn','cannot breathe','heart attack']
+    share_wa:'Share on WhatsApp', thinking:'Thinking...', no_log:'No entries yet.'
   },
   hi: {
     nav_symptoms:'लक्षण', nav_vitals:'जांच', nav_ask:'AI पूछें', nav_log:'लॉग',
@@ -286,8 +289,7 @@ const I18N = {
     ask_patient_name:'मरीज का नाम (वैकल्पिक)', ask_age:'उम्र', ask_question:'आपका सवाल',
     ask_submit:'सलाह लें', analyze_vitals:'माप विश्लेषण करें', log_clear:'लॉग साफ़ करें',
     yes:'हाँ', no:'नहीं', offline_cache:'कैश्ड प्रतिक्रियाएं दिखा रहे हैं (ऑफलाइन)',
-    share_wa:'WhatsApp पर साझा करें', thinking:'सोच रहे हैं...',no_log:'कोई प्रविष्टि नहीं।',
-    emergency_keywords:['सीने में दर्द','सांस लेने में कठिनाई','बेहोश','भारी रक्तस्राव','दौरा','स्ट्रोक','सांस नहीं','गंभीर जलन','chest pain','unconscious']
+    share_wa:'WhatsApp पर साझा करें', thinking:'सोच रहे हैं...', no_log:'कोई प्रविष्टि नहीं।'
   },
   kn: {
     nav_symptoms:'ಲಕ್ಷಣಗಳು', nav_vitals:'ಅಳತೆ', nav_ask:'AI ಕೇಳಿ', nav_log:'ದಾಖಲೆ',
@@ -296,8 +298,7 @@ const I18N = {
     ask_patient_name:'ರೋಗಿಯ ಹೆಸರು (ಐಚ್ಛಿಕ)', ask_age:'ವಯಸ್ಸು', ask_question:'ನಿಮ್ಮ ಪ್ರಶ್ನೆ',
     ask_submit:'ಸಲಹೆ ಪಡೆಯಿರಿ', analyze_vitals:'ಅಳತೆ ವಿಶ್ಲೇಷಿಸಿ', log_clear:'ದಾಖಲೆ ಅಳಿಸಿ',
     yes:'ಹೌದು', no:'ಇಲ್ಲ', offline_cache:'ಕ್ಯಾಶ್ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ (ಆಫ್‌ಲೈನ್)',
-    share_wa:'WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ', thinking:'ಯೋಚಿಸುತ್ತಿದ್ದೇವೆ...',no_log:'ಯಾವುದೇ ನಮೂದು ಇಲ್ಲ.',
-    emergency_keywords:['ಎದೆ ನೋವು','ಉಸಿರಾಡಲು ಕಷ್ಟ','ಪ್ರಜ್ಞಾಶೂನ್ಯ','ತೀವ್ರ ರಕ್ತಸ್ರಾವ','ಸೆಳವು','chest pain','unconscious']
+    share_wa:'WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ', thinking:'ಯೋಚಿಸುತ್ತಿದ್ದೇವೆ...', no_log:'ಯಾವುದೇ ನಮೂದು ಇಲ್ಲ.'
   },
   ta: {
     nav_symptoms:'அறிகுறிகள்', nav_vitals:'அளவுகள்', nav_ask:'AI கேள்', nav_log:'பதிவு',
@@ -306,8 +307,7 @@ const I18N = {
     ask_patient_name:'நோயாளி பெயர் (விரும்பினால்)', ask_age:'வயது', ask_question:'உங்கள் கேள்வி',
     ask_submit:'ஆலோசனை பெறுக', analyze_vitals:'அளவுகள் பகுப்பாய்வு', log_clear:'பதிவு அழி',
     yes:'ஆம்', no:'இல்லை', offline_cache:'கேச் பதில்கள் காட்டப்படுகின்றன (ஆஃப்லைன்)',
-    share_wa:'WhatsApp இல் பகிர்', thinking:'யோசிக்கிறோம்...',no_log:'பதிவுகள் இல்லை.',
-    emergency_keywords:['மார்பு வலி','சுவாச சிரமம்','மயக்கம்','அதிக இரத்தப்போக்கு','வலிப்பு','chest pain','unconscious']
+    share_wa:'WhatsApp இல் பகிர்', thinking:'யோசிக்கிறோம்...', no_log:'பதிவுகள் இல்லை.'
   },
   bn: {
     nav_symptoms:'উপসর্গ', nav_vitals:'পরিমাপ', nav_ask:'AI জিজ্ঞেস', nav_log:'লগ',
@@ -316,8 +316,7 @@ const I18N = {
     ask_patient_name:'রোগীর নাম (ঐচ্ছিক)', ask_age:'বয়স', ask_question:'আপনার প্রশ্ন',
     ask_submit:'পরামর্শ পান', analyze_vitals:'পরিমাপ বিশ্লেষণ', log_clear:'লগ মুছুন',
     yes:'হ্যাঁ', no:'না', offline_cache:'ক্যাশ করা উত্তর দেখানো হচ্ছে (অফলাইন)',
-    share_wa:'WhatsApp এ শেয়ার', thinking:'ভাবছি...',no_log:'কোনো এন্ট্রি নেই।',
-    emergency_keywords:['বুকে ব্যথা','শ্বাস নিতে কষ্ট','অচেতন','ভারী রক্তক্ষরণ','খিঁচুনি','chest pain','unconscious']
+    share_wa:'WhatsApp এ শেয়ার', thinking:'ভাবছি...', no_log:'কোনো এন্ট্রি নেই।'
   },
   sw: {
     nav_symptoms:'Dalili', nav_vitals:'Vipimo', nav_ask:'Uliza AI', nav_log:'Kumbukumbu',
@@ -326,8 +325,7 @@ const I18N = {
     ask_patient_name:'Jina la Mgonjwa (si lazima)', ask_age:'Umri', ask_question:'Swali lako',
     ask_submit:'Pata Ushauri', analyze_vitals:'Changanua Vipimo', log_clear:'Futa Kumbukumbu',
     yes:'NDIO', no:'HAPANA', offline_cache:'Majibu ya akiba yanaonyeshwa (nje ya mtandao)',
-    share_wa:'Shiriki WhatsApp', thinking:'Inafikiri...',no_log:'Hakuna rekodi.',
-    emergency_keywords:['maumivu ya kifua','ugumu wa kupumua','kupoteza fahamu','kutoka damu nyingi','degedege','chest pain','unconscious']
+    share_wa:'Shiriki WhatsApp', thinking:'Inafikiri...', no_log:'Hakuna rekodi.'
   },
   ha: {
     nav_symptoms:'Alamomi', nav_vitals:'Auna', nav_ask:'Tambaya AI', nav_log:'Tarihi',
@@ -336,8 +334,7 @@ const I18N = {
     ask_patient_name:'Sunan Majinyaci (zabi)', ask_age:'Shekaru', ask_question:'Tambayarka',
     ask_submit:'Sami Shawara', analyze_vitals:'Nazarin Auna', log_clear:'Goge Tarihi',
     yes:'I', no:'A\'A', offline_cache:'Ana nuna amsoshi daga cache (ba kan layi ba)',
-    share_wa:'Raba a WhatsApp', thinking:'Ana tunani...',no_log:'Babu bayanai.',
-    emergency_keywords:['zafi a kirji','matsalar numfashi','rashin hankali','zubar jini mai yawa','farfadiya','chest pain','unconscious']
+    share_wa:'Raba a WhatsApp', thinking:'Ana tunani...', no_log:'Babu bayanai.'
   },
   fr: {
     nav_symptoms:'Symptômes', nav_vitals:'Constantes', nav_ask:'Demander IA', nav_log:'Journal',
@@ -346,8 +343,7 @@ const I18N = {
     ask_patient_name:'Nom du Patient (optionnel)', ask_age:'Âge', ask_question:'Votre Question',
     ask_submit:'Obtenir des Conseils', analyze_vitals:'Analyser les Constantes', log_clear:'Effacer le Journal',
     yes:'OUI', no:'NON', offline_cache:'Affichage des réponses en cache (hors ligne)',
-    share_wa:'Partager sur WhatsApp', thinking:'Réflexion...',no_log:'Aucune entrée.',
-    emergency_keywords:['douleur thoracique','difficulté à respirer','inconscient','saignement abondant','convulsions','stroke','arrêt respiratoire','brûlure grave','chest pain','unconscious']
+    share_wa:'Partager sur WhatsApp', thinking:'Réflexion...', no_log:'Aucune entrée.'
   }
 };
 
@@ -357,12 +353,13 @@ const I18N = {
 const QUESTION_FLOWS = {
   en: [
     { id:'fever', q:'Does the patient have fever (hot body)?' },
-    { id:'fever_high', q:'Is the body heat above 38°C (very hot to touch)?', depends:{ fever:true } },
+    { id:'fever_high', q:'Is the body temperature above 38°C (very hot to touch)?', depends:{ fever:true } },
     { id:'fever_days', q:'Has the fever lasted more than 3 days?', depends:{ fever:true } },
     { id:'cough', q:'Does the patient have a cough?' },
     { id:'cough_blood', q:'Is there blood in the cough?', depends:{ cough:true } },
     { id:'breathing', q:'Is the patient having difficulty breathing?' },
     { id:'chest_pain', q:'Does the patient have chest pain?' },
+    { id:'chest_pain_severe', q:'Is the chest pain severe — with sweating, arm/jaw pain, or dizziness?', depends:{ chest_pain:true } },
     { id:'vomiting', q:'Is the patient vomiting?' },
     { id:'diarrhea', q:'Does the patient have diarrhea (loose stools)?' },
     { id:'diarrhea_blood', q:'Is there blood in the stools?', depends:{ diarrhea:true } },
@@ -380,6 +377,7 @@ const QUESTION_FLOWS = {
     { id:'cough_blood', q:'क्या खांसी में खून आता है?', depends:{ cough:true } },
     { id:'breathing', q:'क्या सांस लेने में तकलीफ है?' },
     { id:'chest_pain', q:'क्या सीने में दर्द है?' },
+    { id:'chest_pain_severe', q:'क्या सीने में दर्द बहुत तेज है — पसीना, बांह/जबड़े में दर्द, या चक्कर के साथ?', depends:{ chest_pain:true } },
     { id:'vomiting', q:'क्या मरीज उल्टी कर रहा है?' },
     { id:'diarrhea', q:'क्या दस्त हो रहे हैं?' },
     { id:'diarrhea_blood', q:'क्या मल में खून है?', depends:{ diarrhea:true } },
@@ -397,6 +395,7 @@ const QUESTION_FLOWS = {
     { id:'cough_blood', q:'ಕೆಮ್ಮಿನಲ್ಲಿ ರಕ್ತ ಬರುತ್ತಿದೆಯೇ?', depends:{ cough:true } },
     { id:'breathing', q:'ಉಸಿರಾಡಲು ತೊಂದರೆ ಇದೆಯೇ?' },
     { id:'chest_pain', q:'ಎದೆ ನೋವು ಇದೆಯೇ?' },
+    { id:'chest_pain_severe', q:'ಎದೆ ನೋವು ತೀವ್ರವಾಗಿದೆಯೇ — ಬೆವರು, ತೋಳು/ದವಡೆ ನೋವು, ತಲೆ ತಿರುಗುವಿಕೆ ಜೊತೆಗೆ?', depends:{ chest_pain:true } },
     { id:'vomiting', q:'ರೋಗಿ ವಾಂತಿ ಮಾಡುತ್ತಿದ್ದಾರೆಯೇ?' },
     { id:'diarrhea', q:'ಭೇದಿ ಆಗುತ್ತಿದೆಯೇ?' },
     { id:'diarrhea_blood', q:'ಮಲದಲ್ಲಿ ರಕ್ತ ಇದೆಯೇ?', depends:{ diarrhea:true } },
@@ -407,7 +406,6 @@ const QUESTION_FLOWS = {
     { id:'child_under5', q:'ರೋಗಿ 5 ವರ್ಷ ಒಳಗಿನ ಮಗುವೇ?' },
   ]
 };
-// Fallback to English for other languages
 ['ta','bn','sw','ha','fr'].forEach(l => QUESTION_FLOWS[l] = QUESTION_FLOWS.en);
 
 // ═══════════════════════════════════════════════════════════════
@@ -429,30 +427,18 @@ function getCache() {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || []; }
   catch(e) { return []; }
 }
-
 function saveCache(entries) {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(entries.slice(-MAX_CACHE))); }
   catch(e) {}
 }
-
 function addToCache(query, response) {
   const entries = getCache();
-  entries.push({
-    q: query,
-    r: response,
-    ts: Date.now(),
-    tokens: tokenize(query)
-  });
+  entries.push({ q: query, r: response, ts: Date.now(), tokens: tokenize(query) });
   saveCache(entries);
 }
-
 function tokenize(text) {
-  return text.toLowerCase()
-    .replace(/[^\w\s]/g,'')
-    .split(/\s+/)
-    .filter(w => w.length > 2);
+  return text.toLowerCase().replace(/[^\w\s]/g,'').split(/\s+/).filter(w => w.length > 2);
 }
-
 function jaccardSimilarity(a, b) {
   const setA = new Set(a), setB = new Set(b);
   let inter = 0;
@@ -460,16 +446,12 @@ function jaccardSimilarity(a, b) {
   const union = setA.size + setB.size - inter;
   return union === 0 ? 0 : inter / union;
 }
-
 function findSimilarCached(query, topN = 3) {
   const cache = getCache();
   if (cache.length === 0) return [];
   const qTokens = tokenize(query);
-  const scored = cache.map(entry => ({
-    ...entry,
-    score: jaccardSimilarity(qTokens, entry.tokens || tokenize(entry.q))
-  }));
-  return scored
+  return cache
+    .map(entry => ({ ...entry, score: jaccardSimilarity(qTokens, entry.tokens || tokenize(entry.q)) }))
     .filter(e => e.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, topN);
@@ -482,13 +464,11 @@ function getLog() {
   try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }
   catch(e) { return []; }
 }
-
 function addLog(query, response, type) {
   const log = getLog();
   log.push({ q: query, r: response, ts: Date.now(), type: type || 'query' });
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
 }
-
 function renderLog() {
   const log = getLog();
   const container = document.getElementById('log-list');
@@ -496,7 +476,7 @@ function renderLog() {
     container.innerHTML = `<p style="color:var(--text2)">${t('no_log')}</p>`;
     return;
   }
-  container.innerHTML = [...log].reverse().map((entry, i) => `
+  container.innerHTML = [...log].reverse().map((entry) => `
     <div class="log-entry">
       <div class="log-time">🕐 ${new Date(entry.ts).toLocaleString()} <span class="badge badge-${entry.type==='emergency'?'red':'green'}">${entry.type||'query'}</span></div>
       <div class="log-q">Q: ${escHtml(entry.q)}</div>
@@ -504,37 +484,22 @@ function renderLog() {
     </div>
   `).join('');
 }
-
 function exportLog(format) {
   const log = getLog();
   if (!log.length) { alert('No log entries to export.'); return; }
-
   let content, filename, mime;
   const now = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-
   if (format === 'csv') {
     const header = 'Timestamp,Type,Question,Response\n';
     const rows = log.map(e =>
       `"${new Date(e.ts).toLocaleString()}","${e.type||'query'}","${(e.q||'').replace(/"/g,'""')}","${(e.r||'').replace(/"/g,'""').replace(/\n/g,' ')}"`
     ).join('\n');
-    content = header + rows;
-    filename = `ruralhealth-log-${now}.csv`;
-    mime = 'text/csv';
+    content = header + rows; filename = `ruralhealth-log-${now}.csv`; mime = 'text/csv';
   } else {
     const header = `RuralHealth AI — Audit Log\nExported: ${new Date().toLocaleString()}\nTotal entries: ${log.length}\n${'='.repeat(50)}\n\n`;
-    const entries = log.map((e, i) => [
-      `Entry ${i+1}`,
-      `Time: ${new Date(e.ts).toLocaleString()}`,
-      `Type: ${e.type||'query'}`,
-      `Question: ${e.q}`,
-      `AI Response: ${e.r}`,
-      '-'.repeat(40)
-    ].join('\n')).join('\n\n');
-    content = header + entries;
-    filename = `ruralhealth-log-${now}.txt`;
-    mime = 'text/plain';
+    const entries = log.map((e, i) => [`Entry ${i+1}`,`Time: ${new Date(e.ts).toLocaleString()}`,`Type: ${e.type||'query'}`,`Question: ${e.q}`,`AI Response: ${e.r}`,'-'.repeat(40)].join('\n')).join('\n\n');
+    content = header + entries; filename = `ruralhealth-log-${now}.txt`; mime = 'text/plain';
   }
-
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -543,46 +508,50 @@ function exportLog(format) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-
 function shareLogWhatsApp() {
   const log = getLog();
   if (!log.length) { alert('No log entries to share.'); return; }
   const last10 = log.slice(-10);
   let msg = `🏥 RuralHealth AI — Audit Log Summary\n📅 ${new Date().toLocaleDateString()}\n\n`;
-  last10.forEach((e, i) => {
-    msg += `${i+1}. [${new Date(e.ts).toLocaleTimeString()}] ${e.q}\n→ ${e.r.substring(0,120)}...\n\n`;
-  });
+  last10.forEach((e, i) => { msg += `${i+1}. [${new Date(e.ts).toLocaleTimeString()}] ${e.q}\n→ ${e.r.substring(0,120)}...\n\n`; });
   msg += `\n⚠️ Please review with a qualified doctor.`;
-  const encoded = encodeURIComponent(msg);
-  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
-
 function clearLog() {
-  if (confirm('Clear all log entries?')) {
-    localStorage.removeItem(LOG_KEY);
-    renderLog();
-  }
+  if (confirm('Clear all log entries?')) { localStorage.removeItem(LOG_KEY); renderLog(); }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  EMERGENCY DETECTION
+//  EMERGENCY DETECTION — FIXED
 // ═══════════════════════════════════════════════════════════════
-const EMERGENCY_KEYWORDS_EN = [
-  'severe chest pain','difficulty breathing','unconscious','heavy bleeding','seizure',
-  'stroke','not breathing','severe burn','cannot breathe','heart attack',
-  'choking','no pulse','collapsed','unresponsive'
-];
 
-function checkEmergency(text) {
-  const lower = text.toLowerCase();
-  const langKw = (I18N[currentLang] || I18N.en).emergency_keywords || [];
-  const allKw = [...new Set([...EMERGENCY_KEYWORDS_EN, ...langKw])];
-  return allKw.some(kw => lower.includes(kw.toLowerCase()));
+// Map keyword fragments to relevant first-aid tips
+const EMERGENCY_FIRST_AID = {
+  'chest':      '🫀 Keep patient still, loosen tight clothes',
+  'breath':     '😮‍💨 Sit patient upright, loosen clothing around neck/chest',
+  'bleed':      '🩸 Apply firm pressure to the wound, do not remove cloth',
+  'unconsci':   '😵 Place in recovery position, clear airway, do not give food/water',
+  'burn':       '🔥 Cool with clean running water for 10 minutes',
+  'seizure':    '💥 Clear area around patient, do NOT restrain, time the seizure',
+  'stroke':     '🧠 Do not give food or water, note exact time symptoms started',
+  'choking':    '🤧 5 back blows then 5 abdominal thrusts if trained',
+  'pulse':      '💓 Start CPR if trained — 30 compressions then 2 breaths',
+};
+
+function getRelevantFirstAid(reason) {
+  const lower = reason.toLowerCase();
+  const tips = Object.entries(EMERGENCY_FIRST_AID)
+    .filter(([key]) => lower.includes(key))
+    .map(([, tip]) => tip);
+  return tips.length ? tips : ['🏥 Keep patient calm and still, do not leave them alone'];
 }
 
-function showEmergency(query) {
+function showEmergency(reason) {
+  const tips = getRelevantFirstAid(reason);
+  const rulesDiv = document.getElementById('emergency-rules');
+  rulesDiv.innerHTML = '<strong>While waiting for help:</strong><br>' + tips.join('<br>');
   document.getElementById('emergency-screen').classList.add('show');
-  addLog(query, '🚨 EMERGENCY SCREEN SHOWN — CALL 108', 'emergency');
+  addLog(reason, '🚨 EMERGENCY SCREEN SHOWN — CALL 108', 'emergency');
 }
 
 function closeEmergency() {
@@ -595,7 +564,6 @@ function closeEmergency() {
 function t(key) {
   return (I18N[currentLang] || I18N.en)[key] || (I18N.en[key] || key);
 }
-
 function applyTranslations() {
   document.querySelectorAll('[data-key]').forEach(el => {
     const k = el.getAttribute('data-key');
@@ -617,15 +585,10 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 // ═══════════════════════════════════════════════════════════════
-//  AI QUERY
+//  AI QUERY — no frontend emergency keyword trigger
 // ═══════════════════════════════════════════════════════════════
 async function queryAI(userQuery, extraContext) {
   const fullQuery = extraContext ? `${extraContext}\n\n${userQuery}` : userQuery;
-
-  if (checkEmergency(fullQuery)) {
-    showEmergency(fullQuery);
-    return null;
-  }
 
   if (!isOnline) {
     return { offline: true, results: findSimilarCached(fullQuery, 3) };
@@ -644,7 +607,6 @@ async function queryAI(userQuery, extraContext) {
     addLog(fullQuery, response, 'ai');
     return { online: true, response };
   } catch (e) {
-    // Fallback to cache
     return { offline: true, results: findSimilarCached(fullQuery, 3), error: e.message };
   }
 }
@@ -655,11 +617,21 @@ function renderAIResult(container, result, originalQuery) {
   if (result.online) {
     const text = result.response;
     const hasUncertainty = /unclear|uncertain|cannot determine|not sure|unsure/i.test(text);
+    const isEmergency = /CALL 108/i.test(text);
     let html = '';
-    if (hasUncertainty) {
-      html += `<div class="confidence-warn">⚠️ ${t('ai_unsure') || 'AI is unsure. Please consult a doctor or call 108.'}</div>`;
+
+    if (isEmergency) {
+      html += `<div class="severity-urgent">🚨 Emergency — Call 108 immediately</div>`;
+    } else if (/see a doctor within 24|urgent|refer to doctor soon|needs medical attention/i.test(text)) {
+      html += `<div class="severity-moderate">🟡 Moderate — Refer to doctor soon</div>`;
+    } else {
+      html += `<div class="severity-mild">🟢 Mild — Monitor and provide home care</div>`;
     }
-    // Split disclaimer out
+
+    if (hasUncertainty) {
+      html += `<div class="confidence-warn">⚠️ AI is unsure. Please consult a doctor or call 108.</div>`;
+    }
+
     const parts = text.split('⚠️ This is NOT a diagnosis');
     html += `<div class="result-box">${escHtml(parts[0]).replace(/\n/g,'<br>')}`;
     if (parts[1] !== undefined) {
@@ -669,12 +641,11 @@ function renderAIResult(container, result, originalQuery) {
     html += whatsappBtn(originalQuery, text);
     container.innerHTML = html;
   } else {
-    // Offline
     let html = `<div class="card" style="border-color:var(--warning)">`;
     html += `<p style="color:var(--warning);font-weight:700">📡 ${t('offline_cache')}</p>`;
     if (result.results && result.results.length > 0) {
       html += `<p style="color:var(--text2);font-size:15px;margin-bottom:12px">Showing ${result.results.length} most similar past response(s):</p>`;
-      result.results.forEach((r, i) => {
+      result.results.forEach(r => {
         const simPct = Math.round(r.score * 100);
         html += `<div class="offline-match">
           <div class="match-q">
@@ -699,12 +670,11 @@ function whatsappBtn(query, response) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SYMPTOM CHECKER
+//  SYMPTOM CHECKER — FIXED EMERGENCY LOGIC
 // ═══════════════════════════════════════════════════════════════
 function getQuestions() {
   return QUESTION_FLOWS[currentLang] || QUESTION_FLOWS.en;
 }
-
 function shouldShowQuestion(q, answers) {
   if (!q.depends) return true;
   for (const [key, val] of Object.entries(q.depends)) {
@@ -712,7 +682,6 @@ function shouldShowQuestion(q, answers) {
   }
   return true;
 }
-
 function getActiveQuestions(answers) {
   return getQuestions().filter(q => shouldShowQuestion(q, answers));
 }
@@ -732,8 +701,6 @@ function renderSymptomStep(container) {
   }
   const q = questions[symptomStep];
   const progress = Math.round((symptomStep / questions.length) * 100);
-  const yesText = t('yes');
-  const noText = t('no');
 
   container.innerHTML = `
     <div id="progress-wrap"><div id="progress-bar" style="width:${progress}%"></div></div>
@@ -741,8 +708,8 @@ function renderSymptomStep(container) {
     <div class="q-card">
       <div class="q-text">${escHtml(q.q)}</div>
       <div class="yn-row">
-        <button class="yn-btn yn-yes" onclick="answerSymptom('${q.id}', true)">${yesText} ✅</button>
-        <button class="yn-btn yn-no" onclick="answerSymptom('${q.id}', false)">${noText} ❌</button>
+        <button class="yn-btn yn-yes" onclick="answerSymptom('${q.id}', true)">${t('yes')} ✅</button>
+        <button class="yn-btn yn-no" onclick="answerSymptom('${q.id}', false)">${t('no')} ❌</button>
       </div>
     </div>
     ${symptomStep > 0 ? `<button class="btn btn-ghost btn-sm" onclick="symptomStep--;renderSymptomStep(document.getElementById('symptom-checker'))">⬅️ Back</button>` : ''}
@@ -751,39 +718,37 @@ function renderSymptomStep(container) {
 
 function answerSymptom(id, val) {
   symptomAnswers[id] = val;
-  // Emergency check
-  // Only trigger emergency for chest pain WITH other danger signs
-// Only trigger emergency when MULTIPLE danger signs present together
-const dangerCount = [
-  symptomAnswers['chest_pain'] === true,
-  symptomAnswers['breathing'] === true,
-  symptomAnswers['consciousness'] === false,
-  symptomAnswers['cough_blood'] === true,
-  symptomAnswers['sweating'] === true,
-].filter(Boolean).length;
 
-// Chest pain alone = NOT emergency, let AI handle it
-// Chest pain + ANY one other danger sign = emergency
-if (id === 'chest_pain' && val && dangerCount >= 2) {
-  showEmergency('chest pain with danger signs');
-  return;
-}
+  // ── EMERGENCY RULES (frontend) ──────────────────────────────
+  // Rule 1: Unconscious patient = always emergency
+  if (id === 'consciousness' && val === false) {
+    showEmergency('unconscious patient');
+    return;
+  }
 
-// Breathing difficulty alone IS always emergency
-if (id === 'breathing' && val) {
-  showEmergency('difficulty breathing');
-  return;
-}
+  // Rule 2: Severe chest pain (with sweating/arm pain/dizziness) = emergency
+  if (id === 'chest_pain_severe' && val === true) {
+    showEmergency('severe chest pain with danger signs');
+    return;
+  }
 
-// Unconscious is always emergency
-if (id === 'consciousness' && !val) {
-  showEmergency('patient unconscious');
-  return;
-}
+  // Rule 3: Breathing difficulty + chest pain together = emergency
+  if (id === 'breathing' && val === true && symptomAnswers['chest_pain'] === true) {
+    showEmergency('breathing difficulty with chest pain');
+    return;
+  }
+  if (id === 'chest_pain' && val === true && symptomAnswers['breathing'] === true) {
+    showEmergency('chest pain with breathing difficulty');
+    return;
+  }
+
+  // Rule 4: Blood in cough = always needs urgent AI assessment (NOT emergency screen)
+  // Rule 5: Mild chest pain alone → let AI handle it
+  // Rule 6: Fever + cough → let AI handle it
+  // ────────────────────────────────────────────────────────────
 
   symptomStep++;
   const questions = getActiveQuestions(symptomAnswers);
-  // Skip ahead if next question deps not met
   while (symptomStep < questions.length && !shouldShowQuestion(questions[symptomStep], symptomAnswers)) {
     symptomStep++;
   }
@@ -792,16 +757,14 @@ if (id === 'consciousness' && !val) {
 
 async function renderSymptomResult(container) {
   const positives = Object.entries(symptomAnswers)
-    .filter(([k,v]) => v === true)
-    .map(([k]) => k.replace(/_/g,' '));
+    .filter(([k,v]) => v === true).map(([k]) => k.replace(/_/g,' '));
   const negatives = Object.entries(symptomAnswers)
-    .filter(([k,v]) => v === false)
-    .map(([k]) => k.replace(/_/g,' '));
+    .filter(([k,v]) => v === false).map(([k]) => k.replace(/_/g,' '));
 
   const summary = `Symptom assessment:\nPresent: ${positives.join(', ') || 'none'}\nAbsent: ${negatives.join(', ') || 'none'}`;
-  const prompt = `A community health worker completed a symptom checklist.\n\n${summary}\n\nPlease analyze these findings and provide guidance for the health worker.`;
+  const prompt = `A community health worker completed a symptom checklist.\n\n${summary}\n\nPlease analyze these findings and provide guidance for the health worker. Classify severity as MILD, MODERATE, or EMERGENCY.`;
 
-  container.innerHTML = `<div class="card"><p style="color:var(--accent)">${t('thinking')||'Thinking...'} 🔄</p></div>`;
+  container.innerHTML = `<div class="card"><p style="color:var(--accent)">${t('thinking')} 🔄</p></div>`;
   const result = await queryAI(prompt);
   const resultDiv = document.createElement('div');
   container.innerHTML = `<div class="card" style="margin-bottom:14px"><p style="font-size:15px;color:var(--text2)">${escHtml(summary).replace(/\n/g,'<br>')}</p></div>`;
@@ -845,7 +808,6 @@ function renderVitals() {
         </div>
       </div>`;
   });
-  // Fix slider inputs after DOM insertion
   VITALS.forEach(v => {
     const inp = document.querySelector(`#vcard-${v.id} input[type=number]`);
     if (inp) inp.id = `vital-input-${v.id}`;
@@ -878,7 +840,7 @@ async function analyzeVitals() {
     const ok = val >= v.normalMin && val <= v.normalMax;
     return `${v.label.replace(/🌡️|💓|🫁|🔴|🔵|💨/g,'').trim()}: ${val} ${v.unit} (${ok?'normal':'ABNORMAL - outside '+v.normalMin+'-'+v.normalMax})`;
   }).join('\n');
-  const prompt = `Community health worker recorded these vitals:\n${lines}\n\nPlease analyze and provide guidance.`;
+  const prompt = `Community health worker recorded these vitals:\n${lines}\n\nPlease analyze and provide guidance. Classify severity as MILD, MODERATE, or EMERGENCY.`;
   const container = document.getElementById('vitals-result');
   container.innerHTML = `<div class="card"><p style="color:var(--accent)">🔄 Analyzing...</p></div>`;
   const result = await queryAI(prompt);
@@ -893,7 +855,6 @@ async function submitAsk() {
   const age = document.getElementById('ask-age').value.trim();
   const question = document.getElementById('ask-question').value.trim();
   if (!question) { alert('Please enter a question.'); return; }
-
   const context = [patient?`Patient: ${patient}`:'', age?`Age: ${age}`:''].filter(Boolean).join(', ');
   const container = document.getElementById('ask-result');
   container.innerHTML = `<div class="card"><p style="color:var(--accent)">🔄 ${t('thinking')}</p></div>`;
@@ -942,16 +903,10 @@ function switchTab(tab) {
 //  UTILITY
 // ═══════════════════════════════════════════════════════════════
 function escHtml(s) {
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
   const el = document.getElementById(id);
   if (el) { el.classList.add('active'); el.style.display = 'block'; }
 }
@@ -1004,7 +959,6 @@ function init() {
   buildLangScreen();
   renderVitals();
   applyTranslations();
-
   const verified = localStorage.getItem(VERIFIED_KEY);
   if (verified) {
     const savedLang = localStorage.getItem(LANG_KEY);
