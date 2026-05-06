@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RuralHealth AI</title>
+<style>
+:root {
+  --bg: #0a0f1a;
+  --bg2: #111827;
+  --bg3: #1c2535;
+  --border: #2a3a52;
+  --accent: #22d3ee;
+  --accent2: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --text: #f0f6ff;
+  --text2: #94a3b8;
+  --btn-h: 64px;
+  --radius: 14px;
+  --font: 'Segoe UI', system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:18px;line-height:1.5;overflow-x:hidden}
+body{padding-bottom:80px}
+.screen{display:none;min-height:100vh;padding:16px}
+.screen.active{display:block}
+
+/* ── Offline banner ── */
+#offline-banner{display:none;background:var(--warning);color:#000;text-align:center;padding:10px;font-weight:700;font-size:16px;position:sticky;top:0;z-index:999}
+#offline-banner.show{display:block}
+
+/* ── Disclaimer footer ── */
+#footer{position:fixed;bottom:0;left:0;right:0;background:#0d1520;border-top:1px solid var(--border);padding:8px 12px;font-size:13px;color:var(--text2);text-align:center;z-index:100}
+
+/* ── Common ── */
+h1{font-size:26px;font-weight:800;color:var(--accent);margin-bottom:6px}
+h2{font-size:22px;font-weight:700;margin-bottom:12px}
+p{margin-bottom:10px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:var(--btn-h);border:none;border-radius:var(--radius);font-size:19px;font-weight:700;cursor:pointer;padding:12px 16px;transition:filter .15s,transform .1s;-webkit-user-select:none;user-select:none}
+.btn:active{transform:scale(.97);filter:brightness(.85)}
+.btn-primary{background:var(--accent);color:#000}
+.btn-success{background:var(--accent2);color:#000}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-warn{background:var(--warning);color:#000}
+.btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-sm{min-height:44px;font-size:16px;padding:8px 14px}
+.input-wrap{position:relative;margin-bottom:14px}
+input[type=text],input[type=number],textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:18px;padding:14px 50px 14px 14px;outline:none;-webkit-appearance:none}
+input[type=text]:focus,input[type=number]:focus,textarea:focus{border-color:var(--accent)}
+.mic-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:26px;cursor:pointer;padding:4px;line-height:1}
+label{display:block;font-size:16px;color:var(--text2);margin-bottom:6px;font-weight:600}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:13px;font-weight:700}
+.badge-green{background:#064e3b;color:#34d399}
+.badge-red{background:#7f1d1d;color:#fca5a5}
+.badge-yellow{background:#78350f;color:#fcd34d}
+
+/* ── Language screen ── */
+#lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.lang-btn{background:var(--bg2);border:2px solid var(--border);border-radius:var(--radius);padding:18px 10px;text-align:center;cursor:pointer;transition:border-color .2s,transform .1s;font-size:22px;font-weight:700}
+.lang-btn:active{transform:scale(.96)}
+.lang-btn.selected,.lang-btn:hover{border-color:var(--accent)}
+.lang-flag{font-size:36px;display:block;margin-bottom:6px}
+.lang-name{font-size:16px;color:var(--text2)}
+
+/* ── Nav tabs ── */
+#nav{display:flex;gap:6px;background:var(--bg2);border-bottom:1px solid var(--border);padding:8px;position:sticky;top:0;z-index:90;overflow-x:auto}
+.nav-tab{flex:0 0 auto;min-height:48px;font-size:14px;padding:8px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-tab.active{background:var(--accent);color:#000}
+
+/* ── Symptom checker ── */
+#progress-wrap{background:var(--bg3);border-radius:20px;height:10px;margin-bottom:16px;overflow:hidden}
+#progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:20px;transition:width .3s}
+.q-card{background:var(--bg2);border:2px solid var(--accent);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.q-text{font-size:20px;font-weight:700;margin-bottom:16px}
+.yn-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.yn-btn{min-height:64px;font-size:22px;font-weight:800;border-radius:var(--radius);border:none;cursor:pointer;transition:transform .1s}
+.yn-btn:active{transform:scale(.95)}
+.yn-yes{background:#064e3b;color:#34d399;border:2px solid #34d399}
+.yn-no{background:#3b1111;color:#fca5a5;border:2px solid #fca5a5}
+
+/* ── Vitals ── */
+.vital-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.vital-name{font-size:19px;font-weight:700;margin-bottom:4px}
+.vital-range{font-size:14px;color:var(--text2);margin-bottom:10px}
+.vital-bar-wrap{background:var(--bg3);border-radius:10px;height:18px;position:relative;margin-bottom:10px;overflow:visible}
+.vital-zone{position:absolute;height:100%;background:#064e3b;border-radius:10px}
+.vital-indicator{position:absolute;top:-4px;width:10px;height:26px;background:white;border-radius:4px;transform:translateX(-50%);transition:left .2s}
+.vital-val{font-size:22px;font-weight:800;text-align:center;margin-bottom:8px}
+.vital-val.ok{color:#34d399}
+.vital-val.warn{color:#ef4444}
+input[type=range]{width:100%;accent-color:var(--accent);height:36px;cursor:pointer}
+
+/* ── AI Result ── */
+.result-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;white-space:pre-wrap;font-size:17px;line-height:1.7}
+.result-box .disclaimer{color:var(--warning);font-weight:700;margin-top:12px}
+.confidence-warn{background:#78350f;border:1px solid var(--warning);color:#fcd34d;border-radius:10px;padding:12px;margin-bottom:12px;font-weight:700}
+.offline-match{background:#1e3a5f;border:1px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:8px;font-size:15px}
+.offline-match .match-q{color:#93c5fd;font-size:13px;margin-bottom:4px}
+.offline-match .match-score{float:right;font-size:12px;color:#60a5fa}
+
+/* ── Emergency screen ── */
+#emergency-screen{display:none;position:fixed;inset:0;background:#1a0000;z-index:9999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+#emergency-screen.show{display:flex}
+.emergency-pulse{font-size:100px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.emergency-call{font-size:56px;font-weight:900;color:#ef4444;letter-spacing:2px;text-shadow:0 0 30px #ef4444;margin:16px 0}
+.emergency-sub{font-size:20px;color:#fca5a5;margin-bottom:24px}
+.emergency-rules{background:#2d0000;border:1px solid #ef4444;border-radius:12px;padding:16px;text-align:left;font-size:17px;line-height:2;color:#fca5a5;max-width:400px;width:100%}
+
+/* ── Audit log ── */
+.log-entry{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;font-size:15px}
+.log-time{color:var(--accent);font-size:13px;font-weight:700;margin-bottom:4px}
+.log-q{color:var(--text);margin-bottom:4px;font-weight:600}
+.log-a{color:var(--text2);font-size:14px;line-height:1.5}
+.export-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+
+/* ── WhatsApp btn ── */
+.wa-btn{background:#25d366;color:#fff;font-size:18px;min-height:56px;border-radius:var(--radius);border:none;cursor:pointer;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
+.wa-btn:active{filter:brightness(.85)}
+
+/* ── Utility ── */
+.section-title{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.mt{margin-top:14px}
+.sep{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<!-- Offline Banner -->
+<div id="offline-banner">📡 OFFLINE MODE — Showing cached responses</div>
+
+<!-- Emergency Screen (overlay) -->
+<div id="emergency-screen">
+  <div class="emergency-pulse">🚨</div>
+  <div class="emergency-call">CALL 108 NOW</div>
+  <div class="emergency-sub">This is a medical emergency — do not wait</div>
+  <div class="emergency-rules">
+    <strong>While waiting for help:</strong><br>
+    🫀 Chest pain → Keep patient still, loosen clothes<br>
+    😮‍💨 Not breathing → Start CPR if trained<br>
+    🩸 Heavy bleeding → Apply firm pressure<br>
+    😵 Unconscious → Recovery position, clear airway<br>
+    🔥 Severe burn → Cool with clean water 10 min<br>
+    💥 Seizure → Clear area, do NOT restrain
+  </div>
+  <button class="btn btn-ghost mt" style="max-width:300px;margin-top:20px" onclick="closeEmergency()">✕ Close Emergency Alert</button>
+</div>
+
+<!-- SCREEN: Health Worker Verification -->
+<div id="screen-verify" class="screen active" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh">
+  <div style="max-width:400px;width:100%;text-align:center">
+    <div style="font-size:64px;margin-bottom:12px">🏥</div>
+    <h1>RuralHealth AI</h1>
+    <p style="color:var(--text2);margin:12px 0 24px">This app is for <strong>trained community health workers only</strong>. It does NOT replace a doctor.</p>
+    <div style="background:var(--bg2);border:2px solid var(--warning);border-radius:var(--radius);padding:18px;margin-bottom:24px;text-align:left">
+      <p style="color:var(--warning);font-weight:700;font-size:17px">⚠️ Important Notice</p>
+      <p style="font-size:16px;color:var(--text2);margin-top:8px">Are you a trained community health worker (ASHA, ANM, CHW)?</p>
+    </div>
+    <button class="btn btn-success" onclick="verifyWorker(true)" style="margin-bottom:12px">✅ Yes, I am a health worker</button>
+    <button class="btn btn-ghost" onclick="verifyWorker(false)">🚪 Exit — I am not a health worker</button>
+  </div>
+</div>
+
+<!-- SCREEN: Language Selection -->
+<div id="screen-lang" class="screen" style="padding:20px">
+  <div style="text-align:center;margin-bottom:20px">
+    <div style="font-size:48px">🌍</div>
+    <h2>Choose Your Language</h2>
+    <p style="color:var(--text2)">Select / अपनी भाषा चुनें / ನಿಮ್ಮ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ</p>
+  </div>
+  <div id="lang-grid"></div>
+</div>
+
+<!-- SCREEN: Main App -->
+<div id="screen-main" class="screen" style="padding:0">
+  <!-- Nav -->
+  <div id="nav">
+    <button class="nav-tab active" onclick="switchTab('symptoms')" id="tab-symptoms">🩺 <span data-key="nav_symptoms">Symptoms</span></button>
+    <button class="nav-tab" onclick="switchTab('vitals')" id="tab-vitals">📊 <span data-key="nav_vitals">Vitals</span></button>
+    <button class="nav-tab" onclick="switchTab('ask')" id="tab-ask">💬 <span data-key="nav_ask">Ask AI</span></button>
+    <button class="nav-tab" onclick="switchTab('log')" id="tab-log">📋 <span data-key="nav_log">Log</span></button>
+  </div>
+
+  <!-- TAB: Symptom Checker -->
+  <div id="tab-content-symptoms" class="tab-content" style="padding:16px">
+    <div class="section-title">🩺 <span data-key="symptom_title">Step-by-Step Symptom Checker</span></div>
+    <div id="symptom-checker"></div>
+  </div>
+
+  <!-- TAB: Vitals -->
+  <div id="tab-content-vitals" class="tab-content" style="display:none;padding:16px">
+    <div class="section-title">📊 <span data-key="vitals_title">Check Body Readings</span></div>
+    <div id="vitals-form"></div>
+    <button class="btn btn-primary mt" onclick="analyzeVitals()">🔍 <span data-key="analyze_vitals">Analyze Readings</span></button>
+    <div id="vitals-result" style="margin-top:16px"></div>
+  </div>
+
+  <!-- TAB: Ask AI -->
+  <div id="tab-content-ask" class="tab-content" style="display:none;padding:16px">
+    <div class="section-title">💬 <span data-key="ask_title">Ask the AI</span></div>
+    <div class="card">
+      <label data-key="ask_patient_name">Patient Name (optional)</label>
+      <div class="input-wrap">
+        <input type="text" id="ask-patient" placeholder="..." />
+        <button class="mic-btn" onclick="startVoice('ask-patient')" title="Voice input">🎤</button>
+      </div>
+      <label data-key="ask_age">Age</label>
+      <div class="input-wrap">
+        <input type="number" id="ask-age" placeholder="e.g. 35" min="0" max="120" />
+      </div>
+      <label data-key="ask_question">Your Question</label>
+      <div class="input-wrap">
+        <textarea id="ask-question" rows="4" placeholder="Describe symptoms or ask a health question..."></textarea>
+        <button class="mic-btn" style="top:20px" onclick="startVoice('ask-question')" title="Voice input">🎤</button>
+      </div>
+      <button class="btn btn-primary" onclick="submitAsk()">🔍 <span data-key="ask_submit">Get Advice</span></button>
+    </div>
+    <div id="ask-result"></div>
+  </div>
+
+  <!-- TAB: Audit Log -->
+  <div id="tab-content-log" class="tab-content" style="display:none;padding:16px">
+    <div class="section-title">📋 <span data-key="log_title">Audit Log</span></div>
+    <div class="export-row">
+      <button class="btn btn-ghost btn-sm" onclick="exportLog('text')">📄 Export Text</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportLog('csv')">📊 Export CSV</button>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="shareLogWhatsApp()" style="margin-bottom:14px">📱 Share Log via WhatsApp</button>
+    <div id="log-list"></div>
+    <button class="btn btn-danger btn-sm mt" onclick="clearLog()">🗑️ <span data-key="log_clear">Clear Log</span></button>
+  </div>
+</div>
+
+<!-- Footer disclaimer (always visible) -->
+<div id="footer">🏥 RuralHealth AI supports health workers — it does NOT replace a doctor. For emergencies call <strong>108</strong>.</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ═══════════════════════════════════════════════════════════════
+const CACHE_KEY = 'rh_cache_v2';
+const LANG_KEY = 'rh_lang';
+const VERIFIED_KEY = 'rh_verified';
+const LOG_KEY = 'rh_log';
+const MAX_CACHE = 20;
+
+let currentLang = localStorage.getItem(LANG_KEY) || 'en';
+let isOnline = navigator.onLine;
+let currentTab = 'symptoms';
+let symptomAnswers = [];
+let symptomStep = 0;
+
+// ═══════════════════════════════════════════════════════════════
+//  LANGUAGE DATA
+// ═══════════════════════════════════════════════════════════════
+const LANGS = [
+  { code:'en', flag:'🇬🇧', name:'English', native:'English' },
+  { code:'hi', flag:'🇮🇳', name:'Hindi', native:'हिन्दी' },
+  { code:'kn', flag:'🇮🇳', name:'Kannada', native:'ಕನ್ನಡ' },
+  { code:'ta', flag:'🇮🇳', name:'Tamil', native:'தமிழ்' },
+  { code:'bn', flag:'🇧🇩', name:'Bengali', native:'বাংলা' },
+  { code:'sw', flag:'🇰🇪', name:'Swahili', native:'Kiswahili' },
+  { code:'ha', flag:'🇳🇬', name:'Hausa', native:'Hausa' },
+  { code:'fr', flag:'🇫🇷', name:'French', native:'Français' }
+];
+
+const I18N = {
+  en: {
+    nav_symptoms:'Symptoms', nav_vitals:'Vitals', nav_ask:'Ask AI', nav_log:'Log',
+    symptom_title:'Step-by-Step Symptom Checker', vitals_title:'Check Body Readings',
+    ask_title:'Ask the AI', log_title:'Audit Log',
+    ask_patient_name:'Patient Name (optional)', ask_age:'Age', ask_question:'Your Question',
+    ask_submit:'Get Advice', analyze_vitals:'Analyze Readings', log_clear:'Clear Log',
+    yes:'YES', no:'NO', offline_cache:'Showing cached similar responses (offline)',
+    share_wa:'Share on WhatsApp', thinking:'Thinking...', no_log:'No entries yet.',
+    emergency_keywords:['chest pain','difficulty breathing','unconscious','heavy bleeding','seizure','stroke','not breathing','severe burn','cannot breathe','heart attack']
+  },
+  hi: {
+    nav_symptoms:'लक्षण', nav_vitals:'जांच', nav_ask:'AI पूछें', nav_log:'लॉग',
+    symptom_title:'चरण-दर-चरण लक्षण जांच', vitals_title:'शारीरिक माप जांचें',
+    ask_title:'AI से पूछें', log_title:'ऑडिट लॉग',
+    ask_patient_name:'मरीज का नाम (वैकल्पिक)', ask_age:'उम्र', ask_question:'आपका सवाल',
+    ask_submit:'सलाह लें', analyze_vitals:'माप विश्लेषण करें', log_clear:'लॉग साफ़ करें',
+    yes:'हाँ', no:'नहीं', offline_cache:'कैश्ड प्रतिक्रियाएं दिखा रहे हैं (ऑफलाइन)',
+    share_wa:'WhatsApp पर साझा करें', thinking:'सोच रहे हैं...',no_log:'कोई प्रविष्टि नहीं।',
+    emergency_keywords:['सीने में दर्द','सांस लेने में कठिनाई','बेहोश','भारी रक्तस्राव','दौरा','स्ट्रोक','सांस नहीं','गंभीर जलन','chest pain','unconscious']
+  },
+  kn: {
+    nav_symptoms:'ಲಕ್ಷಣಗಳು', nav_vitals:'ಅಳತೆ', nav_ask:'AI ಕೇಳಿ', nav_log:'ದಾಖಲೆ',
+    symptom_title:'ಹಂತ-ಹಂತದ ಲಕ್ಷಣ ಪರಿಶೀಲನೆ', vitals_title:'ದೇಹದ ಅಳತೆ ಪರಿಶೀಲಿಸಿ',
+    ask_title:'AI ಗೆ ಕೇಳಿ', log_title:'ಲೆಕ್ಕ ದಾಖಲೆ',
+    ask_patient_name:'ರೋಗಿಯ ಹೆಸರು (ಐಚ್ಛಿಕ)', ask_age:'ವಯಸ್ಸು', ask_question:'ನಿಮ್ಮ ಪ್ರಶ್ನೆ',
+    ask_submit:'ಸಲಹೆ ಪಡೆಯಿರಿ', analyze_vitals:'ಅಳತೆ ವಿಶ್ಲೇಷಿಸಿ', log_clear:'ದಾಖಲೆ ಅಳಿಸಿ',
+    yes:'ಹೌದು', no:'ಇಲ್ಲ', offline_cache:'ಕ್ಯಾಶ್ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ (ಆಫ್‌ಲೈನ್)',
+    share_wa:'WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ', thinking:'ಯೋಚಿಸುತ್ತಿದ್ದೇವೆ...',no_log:'ಯಾವುದೇ ನಮೂದು ಇಲ್ಲ.',
+    emergency_keywords:['ಎದೆ ನೋವು','ಉಸಿರಾಡಲು ಕಷ್ಟ','ಪ್ರಜ್ಞಾಶೂನ್ಯ','ತೀವ್ರ ರಕ್ತಸ್ರಾವ','ಸೆಳವು','chest pain','unconscious']
+  },
+  ta: {
+    nav_symptoms:'அறிகுறிகள்', nav_vitals:'அளவுகள்', nav_ask:'AI கேள்', nav_log:'பதிவு',
+    symptom_title:'படிப்படியான அறிகுறி சோதனை', vitals_title:'உடல் அளவுகள் சரிபார்க்க',
+    ask_title:'AI யிடம் கேளுங்கள்', log_title:'தணிக்கை பதிவு',
+    ask_patient_name:'நோயாளி பெயர் (விரும்பினால்)', ask_age:'வயது', ask_question:'உங்கள் கேள்வி',
+    ask_submit:'ஆலோசனை பெறுக', analyze_vitals:'அளவுகள் பகுப்பாய்வு', log_clear:'பதிவு அழி',
+    yes:'ஆம்', no:'இல்லை', offline_cache:'கேச் பதில்கள் காட்டப்படுகின்றன (ஆஃப்லைன்)',
+    share_wa:'WhatsApp இல் பகிர்', thinking:'யோசிக்கிறோம்...',no_log:'பதிவுகள் இல்லை.',
+    emergency_keywords:['மார்பு வலி','சுவாச சிரமம்','மயக்கம்','அதிக இரத்தப்போக்கு','வலிப்பு','chest pain','unconscious']
+  },
+  bn: {
+    nav_symptoms:'উপসর্গ', nav_vitals:'পরিমাপ', nav_ask:'AI জিজ্ঞেস', nav_log:'লগ',
+    symptom_title:'ধাপে ধাপে উপসর্গ পরীক্ষা', vitals_title:'শারীরিক পরিমাপ দেখুন',
+    ask_title:'AI কে জিজ্ঞেস করুন', log_title:'অডিট লগ',
+    ask_patient_name:'রোগীর নাম (ঐচ্ছিক)', ask_age:'বয়স', ask_question:'আপনার প্রশ্ন',
+    ask_submit:'পরামর্শ পান', analyze_vitals:'পরিমাপ বিশ্লেষণ', log_clear:'লগ মুছুন',
+    yes:'হ্যাঁ', no:'না', offline_cache:'ক্যাশ করা উত্তর দেখানো হচ্ছে (অফলাইন)',
+    share_wa:'WhatsApp এ শেয়ার', thinking:'ভাবছি...',no_log:'কোনো এন্ট্রি নেই।',
+    emergency_keywords:['বুকে ব্যথা','শ্বাস নিতে কষ্ট','অচেতন','ভারী রক্তক্ষরণ','খিঁচুনি','chest pain','unconscious']
+  },
+  sw: {
+    nav_symptoms:'Dalili', nav_vitals:'Vipimo', nav_ask:'Uliza AI', nav_log:'Kumbukumbu',
+    symptom_title:'Ukaguzi wa Dalili Hatua kwa Hatua', vitals_title:'Angalia Vipimo vya Mwili',
+    ask_title:'Uliza AI', log_title:'Kumbukumbu ya Ukaguzi',
+    ask_patient_name:'Jina la Mgonjwa (si lazima)', ask_age:'Umri', ask_question:'Swali lako',
+    ask_submit:'Pata Ushauri', analyze_vitals:'Changanua Vipimo', log_clear:'Futa Kumbukumbu',
+    yes:'NDIO', no:'HAPANA', offline_cache:'Majibu ya akiba yanaonyeshwa (nje ya mtandao)',
+    share_wa:'Shiriki WhatsApp', thinking:'Inafikiri...',no_log:'Hakuna rekodi.',
+    emergency_keywords:['maumivu ya kifua','ugumu wa kupumua','kupoteza fahamu','kutoka damu nyingi','degedege','chest pain','unconscious']
+  },
+  ha: {
+    nav_symptoms:'Alamomi', nav_vitals:'Auna', nav_ask:'Tambaya AI', nav_log:'Tarihi',
+    symptom_title:'Duba Alamomi Mataki-mataki', vitals_title:'Duba Auna Jiki',
+    ask_title:'Tambaya AI', log_title:'Tarihin Dubawa',
+    ask_patient_name:'Sunan Majinyaci (zabi)', ask_age:'Shekaru', ask_question:'Tambayarka',
+    ask_submit:'Sami Shawara', analyze_vitals:'Nazarin Auna', log_clear:'Goge Tarihi',
+    yes:'I', no:'A\'A', offline_cache:'Ana nuna amsoshi daga cache (ba kan layi ba)',
+    share_wa:'Raba a WhatsApp', thinking:'Ana tunani...',no_log:'Babu bayanai.',
+    emergency_keywords:['zafi a kirji','matsalar numfashi','rashin hankali','zubar jini mai yawa','farfadiya','chest pain','unconscious']
+  },
+  fr: {
+    nav_symptoms:'Symptômes', nav_vitals:'Constantes', nav_ask:'Demander IA', nav_log:'Journal',
+    symptom_title:'Vérification Pas à Pas des Symptômes', vitals_title:'Vérifier les Constantes',
+    ask_title:'Demander à l\'IA', log_title:'Journal d\'Audit',
+    ask_patient_name:'Nom du Patient (optionnel)', ask_age:'Âge', ask_question:'Votre Question',
+    ask_submit:'Obtenir des Conseils', analyze_vitals:'Analyser les Constantes', log_clear:'Effacer le Journal',
+    yes:'OUI', no:'NON', offline_cache:'Affichage des réponses en cache (hors ligne)',
+    share_wa:'Partager sur WhatsApp', thinking:'Réflexion...',no_log:'Aucune entrée.',
+    emergency_keywords:['douleur thoracique','difficulté à respirer','inconscient','saignement abondant','convulsions','stroke','arrêt respiratoire','brûlure grave','chest pain','unconscious']
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  SYMPTOM QUESTION FLOWS
+// ═══════════════════════════════════════════════════════════════
+const QUESTION_FLOWS = {
+  en: [
+    { id:'fever', q:'Does the patient have fever (hot body)?' },
+    { id:'fever_high', q:'Is the body heat above 38°C (very hot to touch)?', depends:{ fever:true } },
+    { id:'fever_days', q:'Has the fever lasted more than 3 days?', depends:{ fever:true } },
+    { id:'cough', q:'Does the patient have a cough?' },
+    { id:'cough_blood', q:'Is there blood in the cough?', depends:{ cough:true } },
+    { id:'breathing', q:'Is the patient having difficulty breathing?' },
+    { id:'chest_pain', q:'Does the patient have chest pain?' },
+    { id:'vomiting', q:'Is the patient vomiting?' },
+    { id:'diarrhea', q:'Does the patient have diarrhea (loose stools)?' },
+    { id:'diarrhea_blood', q:'Is there blood in the stools?', depends:{ diarrhea:true } },
+    { id:'consciousness', q:'Is the patient fully conscious and alert?' },
+    { id:'rash', q:'Does the patient have a skin rash?' },
+    { id:'swelling', q:'Is there any swelling on the body?' },
+    { id:'pregnant', q:'Is the patient pregnant?' },
+    { id:'child_under5', q:'Is the patient a child under 5 years old?' },
+  ],
+  hi: [
+    { id:'fever', q:'क्या मरीज को बुखार है?' },
+    { id:'fever_high', q:'क्या तापमान 38°C से ऊपर है?', depends:{ fever:true } },
+    { id:'fever_days', q:'क्या बुखार 3 दिन से ज्यादा है?', depends:{ fever:true } },
+    { id:'cough', q:'क्या मरीज को खांसी है?' },
+    { id:'cough_blood', q:'क्या खांसी में खून आता है?', depends:{ cough:true } },
+    { id:'breathing', q:'क्या सांस लेने में तकलीफ है?' },
+    { id:'chest_pain', q:'क्या सीने में दर्द है?' },
+    { id:'vomiting', q:'क्या मरीज उल्टी कर रहा है?' },
+    { id:'diarrhea', q:'क्या दस्त हो रहे हैं?' },
+    { id:'diarrhea_blood', q:'क्या मल में खून है?', depends:{ diarrhea:true } },
+    { id:'consciousness', q:'क्या मरीज पूरी तरह होश में है?' },
+    { id:'rash', q:'क्या शरीर पर चकत्ते हैं?' },
+    { id:'swelling', q:'क्या शरीर पर सूजन है?' },
+    { id:'pregnant', q:'क्या मरीज गर्भवती है?' },
+    { id:'child_under5', q:'क्या मरीज 5 साल से छोटा बच्चा है?' },
+  ],
+  kn: [
+    { id:'fever', q:'ರೋಗಿಗೆ ಜ್ವರ ಇದೆಯೇ?' },
+    { id:'fever_high', q:'ದೇಹ ತಾಪ 38°C ಗಿಂತ ಹೆಚ್ಚಿದೆಯೇ?', depends:{ fever:true } },
+    { id:'fever_days', q:'ಜ್ವರ 3 ದಿನಗಳಿಗಿಂತ ಹೆಚ್ಚು ಇದೆಯೇ?', depends:{ fever:true } },
+    { id:'cough', q:'ರೋಗಿಗೆ ಕೆಮ್ಮು ಇದೆಯೇ?' },
+    { id:'cough_blood', q:'ಕೆಮ್ಮಿನಲ್ಲಿ ರಕ್ತ ಬರುತ್ತಿದೆಯೇ?', depends:{ cough:true } },
+    { id:'breathing', q:'ಉಸಿರಾಡಲು ತೊಂದರೆ ಇದೆಯೇ?' },
+    { id:'chest_pain', q:'ಎದೆ ನೋವು ಇದೆಯೇ?' },
+    { id:'vomiting', q:'ರೋಗಿ ವಾಂತಿ ಮಾಡುತ್ತಿದ್ದಾರೆಯೇ?' },
+    { id:'diarrhea', q:'ಭೇದಿ ಆಗುತ್ತಿದೆಯೇ?' },
+    { id:'diarrhea_blood', q:'ಮಲದಲ್ಲಿ ರಕ್ತ ಇದೆಯೇ?', depends:{ diarrhea:true } },
+    { id:'consciousness', q:'ರೋಗಿ ಸಂಪೂರ್ಣ ಪ್ರಜ್ಞೆಯಲ್ಲಿದ್ದಾರೆಯೇ?' },
+    { id:'rash', q:'ಚರ್ಮದ ಮೇಲೆ ದದ್ದು ಇದೆಯೇ?' },
+    { id:'swelling', q:'ದೇಹದ ಯಾವುದಾದರೂ ಭಾಗದಲ್ಲಿ ಊತ ಇದೆಯೇ?' },
+    { id:'pregnant', q:'ರೋಗಿ ಗರ್ಭಿಣಿಯೇ?' },
+    { id:'child_under5', q:'ರೋಗಿ 5 ವರ್ಷ ಒಳಗಿನ ಮಗುವೇ?' },
+  ]
+};
+// Fallback to English for other languages
+['ta','bn','sw','ha','fr'].forEach(l => QUESTION_FLOWS[l] = QUESTION_FLOWS.en);
+
+// ═══════════════════════════════════════════════════════════════
+//  VITALS CONFIG
+// ═══════════════════════════════════════════════════════════════
+const VITALS = [
+  { id:'temp', label:'🌡️ Body Heat', unit:'°C', min:30, max:45, normalMin:36.1, normalMax:37.5, step:0.1, default:36.6 },
+  { id:'hr', label:'💓 Heart Beat', unit:'bpm', min:30, max:200, normalMin:60, normalMax:100, step:1, default:75 },
+  { id:'spo2', label:'🫁 Blood Oxygen', unit:'%', min:70, max:100, normalMin:95, normalMax:100, step:1, default:98 },
+  { id:'sbp', label:'🔴 Blood Force (Upper)', unit:'mmHg', min:60, max:220, normalMin:90, normalMax:130, step:1, default:110 },
+  { id:'dbp', label:'🔵 Blood Force (Lower)', unit:'mmHg', min:40, max:140, normalMin:60, normalMax:85, step:1, default:75 },
+  { id:'rr', label:'💨 Breathing Speed', unit:'/min', min:5, max:60, normalMin:12, normalMax:20, step:1, default:16 },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  OFFLINE CACHE — SIMILARITY SEARCH
+// ═══════════════════════════════════════════════════════════════
+function getCache() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || []; }
+  catch(e) { return []; }
+}
+
+function saveCache(entries) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(entries.slice(-MAX_CACHE))); }
+  catch(e) {}
+}
+
+function addToCache(query, response) {
+  const entries = getCache();
+  entries.push({
+    q: query,
+    r: response,
+    ts: Date.now(),
+    tokens: tokenize(query)
+  });
+  saveCache(entries);
+}
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^\w\s]/g,'')
+    .split(/\s+/)
+    .filter(w => w.length > 2);
+}
+
+function jaccardSimilarity(a, b) {
+  const setA = new Set(a), setB = new Set(b);
+  let inter = 0;
+  setA.forEach(w => { if (setB.has(w)) inter++; });
+  const union = setA.size + setB.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+function findSimilarCached(query, topN = 3) {
+  const cache = getCache();
+  if (cache.length === 0) return [];
+  const qTokens = tokenize(query);
+  const scored = cache.map(entry => ({
+    ...entry,
+    score: jaccardSimilarity(qTokens, entry.tokens || tokenize(entry.q))
+  }));
+  return scored
+    .filter(e => e.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topN);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUDIT LOG
+// ═══════════════════════════════════════════════════════════════
+function getLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }
+  catch(e) { return []; }
+}
+
+function addLog(query, response, type) {
+  const log = getLog();
+  log.push({ q: query, r: response, ts: Date.now(), type: type || 'query' });
+  localStorage.setItem(LOG_KEY, JSON.stringify(log));
+}
+
+function renderLog() {
+  const log = getLog();
+  const container = document.getElementById('log-list');
+  if (!log.length) {
+    container.innerHTML = `<p style="color:var(--text2)">${t('no_log')}</p>`;
+    return;
+  }
+  container.innerHTML = [...log].reverse().map((entry, i) => `
+    <div class="log-entry">
+      <div class="log-time">🕐 ${new Date(entry.ts).toLocaleString()} <span class="badge badge-${entry.type==='emergency'?'red':'green'}">${entry.type||'query'}</span></div>
+      <div class="log-q">Q: ${escHtml(entry.q)}</div>
+      <div class="log-a">${escHtml(entry.r.substring(0,200))}${entry.r.length>200?'…':''}</div>
+    </div>
+  `).join('');
+}
+
+function exportLog(format) {
+  const log = getLog();
+  if (!log.length) { alert('No log entries to export.'); return; }
+
+  let content, filename, mime;
+  const now = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+
+  if (format === 'csv') {
+    const header = 'Timestamp,Type,Question,Response\n';
+    const rows = log.map(e =>
+      `"${new Date(e.ts).toLocaleString()}","${e.type||'query'}","${(e.q||'').replace(/"/g,'""')}","${(e.r||'').replace(/"/g,'""').replace(/\n/g,' ')}"`
+    ).join('\n');
+    content = header + rows;
+    filename = `ruralhealth-log-${now}.csv`;
+    mime = 'text/csv';
+  } else {
+    const header = `RuralHealth AI — Audit Log\nExported: ${new Date().toLocaleString()}\nTotal entries: ${log.length}\n${'='.repeat(50)}\n\n`;
+    const entries = log.map((e, i) => [
+      `Entry ${i+1}`,
+      `Time: ${new Date(e.ts).toLocaleString()}`,
+      `Type: ${e.type||'query'}`,
+      `Question: ${e.q}`,
+      `AI Response: ${e.r}`,
+      '-'.repeat(40)
+    ].join('\n')).join('\n\n');
+    content = header + entries;
+    filename = `ruralhealth-log-${now}.txt`;
+    mime = 'text/plain';
+  }
+
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function shareLogWhatsApp() {
+  const log = getLog();
+  if (!log.length) { alert('No log entries to share.'); return; }
+  const last10 = log.slice(-10);
+  let msg = `🏥 RuralHealth AI — Audit Log Summary\n📅 ${new Date().toLocaleDateString()}\n\n`;
+  last10.forEach((e, i) => {
+    msg += `${i+1}. [${new Date(e.ts).toLocaleTimeString()}] ${e.q}\n→ ${e.r.substring(0,120)}...\n\n`;
+  });
+  msg += `\n⚠️ Please review with a qualified doctor.`;
+  const encoded = encodeURIComponent(msg);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+function clearLog() {
+  if (confirm('Clear all log entries?')) {
+    localStorage.removeItem(LOG_KEY);
+    renderLog();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EMERGENCY DETECTION
+// ═══════════════════════════════════════════════════════════════
+const EMERGENCY_KEYWORDS_EN = [
+  'chest pain','difficulty breathing','unconscious','heavy bleeding','seizure',
+  'stroke','not breathing','severe burn','cannot breathe','heart attack',
+  'choking','no pulse','collapsed','unresponsive'
+];
+
+function checkEmergency(text) {
+  const lower = text.toLowerCase();
+  const langKw = (I18N[currentLang] || I18N.en).emergency_keywords || [];
+  const allKw = [...new Set([...EMERGENCY_KEYWORDS_EN, ...langKw])];
+  return allKw.some(kw => lower.includes(kw.toLowerCase()));
+}
+
+function showEmergency(query) {
+  document.getElementById('emergency-screen').classList.add('show');
+  addLog(query, '🚨 EMERGENCY SCREEN SHOWN — CALL 108', 'emergency');
+}
+
+function closeEmergency() {
+  document.getElementById('emergency-screen').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TRANSLATION HELPER
+// ═══════════════════════════════════════════════════════════════
+function t(key) {
+  return (I18N[currentLang] || I18N.en)[key] || (I18N.en[key] || key);
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const k = el.getAttribute('data-key');
+    const v = t(k);
+    if (v) el.textContent = v;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ONLINE/OFFLINE DETECTION
+// ═══════════════════════════════════════════════════════════════
+function updateOnlineStatus() {
+  isOnline = navigator.onLine;
+  const banner = document.getElementById('offline-banner');
+  if (isOnline) banner.classList.remove('show');
+  else banner.classList.add('show');
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ═══════════════════════════════════════════════════════════════
+//  AI QUERY
+// ═══════════════════════════════════════════════════════════════
+async function queryAI(userQuery, extraContext) {
+  const fullQuery = extraContext ? `${extraContext}\n\n${userQuery}` : userQuery;
+
+  if (checkEmergency(fullQuery)) {
+    showEmergency(fullQuery);
+    return null;
+  }
+
+  if (!isOnline) {
+    return { offline: true, results: findSimilarCached(fullQuery, 3) };
+  }
+
+  try {
+    const res = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: fullQuery }] })
+    });
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+    const response = data.response || data.error || 'No response received.';
+    addToCache(fullQuery, response);
+    addLog(fullQuery, response, 'ai');
+    return { online: true, response };
+  } catch (e) {
+    // Fallback to cache
+    return { offline: true, results: findSimilarCached(fullQuery, 3), error: e.message };
+  }
+}
+
+function renderAIResult(container, result, originalQuery) {
+  if (!result) return;
+
+  if (result.online) {
+    const text = result.response;
+    const hasUncertainty = /unclear|uncertain|cannot determine|not sure|unsure/i.test(text);
+    let html = '';
+    if (hasUncertainty) {
+      html += `<div class="confidence-warn">⚠️ ${t('ai_unsure') || 'AI is unsure. Please consult a doctor or call 108.'}</div>`;
+    }
+    // Split disclaimer out
+    const parts = text.split('⚠️ This is NOT a diagnosis');
+    html += `<div class="result-box">${escHtml(parts[0]).replace(/\n/g,'<br>')}`;
+    if (parts[1] !== undefined) {
+      html += `<div class="disclaimer">⚠️ This is NOT a diagnosis${escHtml(parts[1])}</div>`;
+    }
+    html += `</div>`;
+    html += whatsappBtn(originalQuery, text);
+    container.innerHTML = html;
+  } else {
+    // Offline
+    let html = `<div class="card" style="border-color:var(--warning)">`;
+    html += `<p style="color:var(--warning);font-weight:700">📡 ${t('offline_cache')}</p>`;
+    if (result.results && result.results.length > 0) {
+      html += `<p style="color:var(--text2);font-size:15px;margin-bottom:12px">Showing ${result.results.length} most similar past response(s):</p>`;
+      result.results.forEach((r, i) => {
+        const simPct = Math.round(r.score * 100);
+        html += `<div class="offline-match">
+          <div class="match-q">
+            <span>🔍 Similar Q: ${escHtml(r.q.substring(0,80))}${r.q.length>80?'…':''}</span>
+            <span class="match-score">~${simPct}% match</span>
+          </div>
+          <div style="clear:both;color:var(--text);font-size:15px;margin-top:6px;line-height:1.6">${escHtml(r.r.substring(0,250))}${r.r.length>250?'…':''}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">🕐 ${new Date(r.ts).toLocaleString()}</div>
+        </div>`;
+      });
+    } else {
+      html += `<p style="color:var(--text2)">No similar cached responses found. Please reconnect for AI assistance.</p>`;
+    }
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+}
+
+function whatsappBtn(query, response) {
+  const msg = encodeURIComponent(`🏥 RuralHealth AI Report\n\nQuery: ${query}\n\nAdvice: ${response}\n\n⚠️ NOT a diagnosis. Consult a doctor.`);
+  return `<a class="wa-btn" href="https://wa.me/?text=${msg}" target="_blank">📱 ${t('share_wa')}</a>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SYMPTOM CHECKER
+// ═══════════════════════════════════════════════════════════════
+function getQuestions() {
+  return QUESTION_FLOWS[currentLang] || QUESTION_FLOWS.en;
+}
+
+function shouldShowQuestion(q, answers) {
+  if (!q.depends) return true;
+  for (const [key, val] of Object.entries(q.depends)) {
+    if (answers[key] !== val) return false;
+  }
+  return true;
+}
+
+function getActiveQuestions(answers) {
+  return getQuestions().filter(q => shouldShowQuestion(q, answers));
+}
+
+function renderSymptomChecker() {
+  const container = document.getElementById('symptom-checker');
+  symptomAnswers = {};
+  symptomStep = 0;
+  renderSymptomStep(container);
+}
+
+function renderSymptomStep(container) {
+  const questions = getActiveQuestions(symptomAnswers);
+  if (symptomStep >= questions.length) {
+    renderSymptomResult(container);
+    return;
+  }
+  const q = questions[symptomStep];
+  const progress = Math.round((symptomStep / questions.length) * 100);
+  const yesText = t('yes');
+  const noText = t('no');
+
+  container.innerHTML = `
+    <div id="progress-wrap"><div id="progress-bar" style="width:${progress}%"></div></div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:10px">Question ${symptomStep+1} of ~${questions.length}</p>
+    <div class="q-card">
+      <div class="q-text">${escHtml(q.q)}</div>
+      <div class="yn-row">
+        <button class="yn-btn yn-yes" onclick="answerSymptom('${q.id}', true)">${yesText} ✅</button>
+        <button class="yn-btn yn-no" onclick="answerSymptom('${q.id}', false)">${noText} ❌</button>
+      </div>
+    </div>
+    ${symptomStep > 0 ? `<button class="btn btn-ghost btn-sm" onclick="symptomStep--;renderSymptomStep(document.getElementById('symptom-checker'))">⬅️ Back</button>` : ''}
+  `;
+}
+
+function answerSymptom(id, val) {
+  symptomAnswers[id] = val;
+  // Emergency check
+  if (id === 'chest_pain' && val) { showEmergency('Chest pain reported'); return; }
+  if (id === 'breathing' && val) { showEmergency('Difficulty breathing reported'); return; }
+  if (id === 'consciousness' && !val) { showEmergency('Patient unconscious'); return; }
+
+  symptomStep++;
+  const questions = getActiveQuestions(symptomAnswers);
+  // Skip ahead if next question deps not met
+  while (symptomStep < questions.length && !shouldShowQuestion(questions[symptomStep], symptomAnswers)) {
+    symptomStep++;
+  }
+  renderSymptomStep(document.getElementById('symptom-checker'));
+}
+
+async function renderSymptomResult(container) {
+  const positives = Object.entries(symptomAnswers)
+    .filter(([k,v]) => v === true)
+    .map(([k]) => k.replace(/_/g,' '));
+  const negatives = Object.entries(symptomAnswers)
+    .filter(([k,v]) => v === false)
+    .map(([k]) => k.replace(/_/g,' '));
+
+  const summary = `Symptom assessment:\nPresent: ${positives.join(', ') || 'none'}\nAbsent: ${negatives.join(', ') || 'none'}`;
+  const prompt = `A community health worker completed a symptom checklist.\n\n${summary}\n\nPlease analyze these findings and provide guidance for the health worker.`;
+
+  container.innerHTML = `<div class="card"><p style="color:var(--accent)">${t('thinking')||'Thinking...'} 🔄</p></div>`;
+  const result = await queryAI(prompt);
+  const resultDiv = document.createElement('div');
+  container.innerHTML = `<div class="card" style="margin-bottom:14px"><p style="font-size:15px;color:var(--text2)">${escHtml(summary).replace(/\n/g,'<br>')}</p></div>`;
+  container.appendChild(resultDiv);
+  renderAIResult(resultDiv, result, summary);
+
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'btn btn-ghost mt';
+  restartBtn.innerHTML = '🔄 Start New Check';
+  restartBtn.onclick = renderSymptomChecker;
+  container.appendChild(restartBtn);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VITALS
+// ═══════════════════════════════════════════════════════════════
+const vitalValues = {};
+
+function renderVitals() {
+  const form = document.getElementById('vitals-form');
+  VITALS.forEach(v => {
+    vitalValues[v.id] = v.default;
+    const pct = pos => ((pos - v.min) / (v.max - v.min)) * 100;
+    const normalLeft = pct(v.normalMin);
+    const normalWidth = pct(v.normalMax) - normalLeft;
+    form.innerHTML += `
+      <div class="vital-card" id="vcard-${v.id}">
+        <div class="vital-name">${v.label}</div>
+        <div class="vital-range">Normal: ${v.normalMin}–${v.normalMax} ${v.unit}</div>
+        <div class="vital-bar-wrap">
+          <div class="vital-zone" style="left:${normalLeft}%;width:${normalWidth}%"></div>
+          <div class="vital-indicator" id="vind-${v.id}" style="left:${pct(v.default)}%"></div>
+        </div>
+        <input type="range" min="${v.min}" max="${v.max}" step="${v.step}" value="${v.default}"
+          oninput="updateVital('${v.id}', this.value, ${v.min}, ${v.max}, ${v.normalMin}, ${v.normalMax}, '${v.unit}')">
+        <div class="vital-val ok" id="vval-${v.id}">${v.default} ${v.unit}</div>
+        <div class="input-wrap" style="margin-top:8px">
+          <input type="number" min="${v.min}" max="${v.max}" step="${v.step}" value="${v.default}" placeholder="Type value"
+            oninput="syncVitalInput('${v.id}', this.value, ${v.min}, ${v.max}, ${v.normalMin}, ${v.normalMax}, '${v.unit}')">
+          <button class="mic-btn" onclick="startVoice('vital-input-${v.id}')" title="Voice input">🎤</button>
+        </div>
+      </div>`;
+  });
+  // Fix slider inputs after DOM insertion
+  VITALS.forEach(v => {
+    const inp = document.querySelector(`#vcard-${v.id} input[type=number]`);
+    if (inp) inp.id = `vital-input-${v.id}`;
+  });
+}
+
+function updateVital(id, val, min, max, nMin, nMax, unit) {
+  val = parseFloat(val);
+  vitalValues[id] = val;
+  const pct = ((val - min) / (max - min)) * 100;
+  document.getElementById(`vind-${id}`).style.left = pct + '%';
+  const display = document.getElementById(`vval-${id}`);
+  const ok = val >= nMin && val <= nMax;
+  display.textContent = `${val} ${unit}`;
+  display.className = 'vital-val ' + (ok ? 'ok' : 'warn');
+  const inp = document.getElementById(`vital-input-${id}`);
+  if (inp) inp.value = val;
+}
+
+function syncVitalInput(id, val, min, max, nMin, nMax, unit) {
+  val = Math.min(max, Math.max(min, parseFloat(val) || 0));
+  const slider = document.querySelector(`#vcard-${id} input[type=range]`);
+  if (slider) slider.value = val;
+  updateVital(id, val, min, max, nMin, nMax, unit);
+}
+
+async function analyzeVitals() {
+  const lines = VITALS.map(v => {
+    const val = vitalValues[v.id] ?? v.default;
+    const ok = val >= v.normalMin && val <= v.normalMax;
+    return `${v.label.replace(/🌡️|💓|🫁|🔴|🔵|💨/g,'').trim()}: ${val} ${v.unit} (${ok?'normal':'ABNORMAL - outside '+v.normalMin+'-'+v.normalMax})`;
+  }).join('\n');
+  const prompt = `Community health worker recorded these vitals:\n${lines}\n\nPlease analyze and provide guidance.`;
+  const container = document.getElementById('vitals-result');
+  container.innerHTML = `<div class="card"><p style="color:var(--accent)">🔄 Analyzing...</p></div>`;
+  const result = await queryAI(prompt);
+  renderAIResult(container, result, lines);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ASK AI
+// ═══════════════════════════════════════════════════════════════
+async function submitAsk() {
+  const patient = document.getElementById('ask-patient').value.trim();
+  const age = document.getElementById('ask-age').value.trim();
+  const question = document.getElementById('ask-question').value.trim();
+  if (!question) { alert('Please enter a question.'); return; }
+
+  const context = [patient?`Patient: ${patient}`:'', age?`Age: ${age}`:''].filter(Boolean).join(', ');
+  const container = document.getElementById('ask-result');
+  container.innerHTML = `<div class="card"><p style="color:var(--accent)">🔄 ${t('thinking')}</p></div>`;
+  const result = await queryAI(question, context);
+  renderAIResult(container, result, question);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VOICE INPUT
+// ═══════════════════════════════════════════════════════════════
+const LANG_BCP47 = { en:'en-IN', hi:'hi-IN', kn:'kn-IN', ta:'ta-IN', bn:'bn-IN', sw:'sw-KE', ha:'ha-NG', fr:'fr-FR' };
+
+function startVoice(targetId) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input not supported on this browser. Please use Chrome.');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = LANG_BCP47[currentLang] || 'en-IN';
+  rec.interimResults = false;
+  rec.onresult = e => {
+    const transcript = e.results[0][0].transcript;
+    const el = document.getElementById(targetId);
+    if (el) el.value = transcript;
+  };
+  rec.onerror = e => alert('Voice error: ' + e.error);
+  rec.start();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  const content = document.getElementById(`tab-content-${tab}`);
+  const navBtn = document.getElementById(`tab-${tab}`);
+  if (content) content.style.display = 'block';
+  if (navBtn) navBtn.classList.add('active');
+  if (tab === 'log') renderLog();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); el.style.display = 'block'; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LANGUAGE SCREEN
+// ═══════════════════════════════════════════════════════════════
+function buildLangScreen() {
+  const grid = document.getElementById('lang-grid');
+  LANGS.forEach(lang => {
+    const btn = document.createElement('div');
+    btn.className = 'lang-btn';
+    btn.innerHTML = `<span class="lang-flag">${lang.flag}</span><strong>${lang.native}</strong><div class="lang-name">${lang.name}</div>`;
+    btn.onclick = () => {
+      currentLang = lang.code;
+      localStorage.setItem(LANG_KEY, lang.code);
+      applyTranslations();
+      renderSymptomChecker();
+      showScreen('screen-main');
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WORKER VERIFICATION
+// ═══════════════════════════════════════════════════════════════
+function verifyWorker(yes) {
+  if (!yes) {
+    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px;background:#0a0f1a;color:#94a3b8;font-family:sans-serif"><div><div style="font-size:64px">🚪</div><h2 style="color:#f0f6ff;margin:12px 0">This app is for health workers only</h2><p>For personal health questions, please consult a doctor or visit a health centre.</p></div></div>`;
+    return;
+  }
+  localStorage.setItem(VERIFIED_KEY, '1');
+  const savedLang = localStorage.getItem(LANG_KEY);
+  if (savedLang) {
+    currentLang = savedLang;
+    applyTranslations();
+    renderSymptomChecker();
+    showScreen('screen-main');
+  } else {
+    showScreen('screen-lang');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+function init() {
+  updateOnlineStatus();
+  buildLangScreen();
+  renderVitals();
+  applyTranslations();
+
+  const verified = localStorage.getItem(VERIFIED_KEY);
+  if (verified) {
+    const savedLang = localStorage.getItem(LANG_KEY);
+    if (savedLang) {
+      currentLang = savedLang;
+      applyTranslations();
+      renderSymptomChecker();
+      showScreen('screen-main');
+    } else {
+      showScreen('screen-lang');
+    }
+  } else {
+    showScreen('screen-verify');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
