@@ -752,6 +752,17 @@ function renderSymptomStep(container) {
 function answerSymptom(id, val) {
   symptomAnswers[id] = val;
   // Emergency check
+  // Only trigger emergency for chest pain WITH other danger signs
+if (id === 'chest_pain' && val) {
+  if (
+    symptomAnswers['breathing'] === true ||   // difficulty breathing
+    symptomAnswers['consciousness'] === false || // unconscious
+    symptomAnswers['cough_blood'] === true    // blood in cough
+  ) {
+    showEmergency('Severe chest pain with danger signs');
+    return;
+  }
+}
   if (id === 'chest_pain' && val) { showEmergency('Chest pain reported'); return; }
   if (id === 'breathing' && val) { showEmergency('Difficulty breathing reported'); return; }
   if (id === 'consciousness' && !val) { showEmergency('Patient unconscious'); return; }
